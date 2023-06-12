@@ -1,0 +1,2873 @@
+Ansible
+=======
+=======
+
+Installation Ansible on Ubuntu Server
+===========================================
+1 Create 4 aws instances(Ubuntu)
+2 Name the 1st instance as controller
+  and other instances as server1, server2, server3, etc 
+
+ The main machine where ansible is installed is called controller 
+the remaining   remote servers that ansible configures are called manged hosts. 
+
+3 . Establish passwordless ssh between the controller and the managed hosts
+
+4 . To install ansible
+
+     Open the terminal of controller machine through git bash
+
+         a) Update the apt repository 
+               sudo apt-get update –y
+
+         b) Install pthon3 and python3-pip
+             sudo apt-get install -y python3 python3-pip
+
+        c) Install software-properties-common
+            sudo apt-get install -y software-properties-common 
+
+        d) Add the latest version of ansible ppa to apt repository 
+            sudo apt-add-repository ppa:ansible/ansible 
+
+        e) Update the apt repository 
+            sudo apt-get update -y 
+
+     
+        f) Install ansible 
+             sudo apt-get install -y ansible
+
+5 To check the version of ansible 
+           ansible –-version
+
+Note: Install the same version of python in all managed  nodes
+
+6  .Open the terminal of managed node (Server1…server3)  through git bash
+     Go to Server1 through Gitbash
+
+          a) Update the apt repository 
+               sudo apt-get update –y
+
+          b) Install python3 and python3-pip 
+             sudo apt-get install -y python3 python3-pip
+
+         c) Check python version
+                  python3 –-version
+
+        Repeat above all Step in remaining manage node 
+          (Server2 and Server3)
+
+7 .  Setup password less SSH b/w the controller and managed Node
+      
+        Connect to first Managed Node(server1)
+         And set the password
+         
+                    A > Check the  user 
+                         $ whoami==> ubuntu
+                     
+                    B > set the password for user
+                            $ sudo passwd ubuntu
+
+                    C > open /etc/ssh/sshd_config file and Search for
+
+                             PasswordAuthentication and change it from no to yes
+
+               
+                              EX:==
+                                      $sudo vim /etc/ssh/sshd_config
+                          
+                                       PasswordAuthentication  yes
+
+                             Save and exit (Ec+:wq)
+
+                      D > Restart SSH
+                              $ sudo service ssh restart
+
+                         Repeat  step on all the manage node
+                         (Server2 and server3)
+
+8 .Go to the controller machine 
+
+     Ansible does not require any agent software to be installed on our machine.
+     Instead it uses passwordless ssh.
+
+      Note:Ansible uses agentless policy
+
+    Establish passwordless ssh between the controller and the managed     hosts
+
+          * Generate ssh keys on the controller machine
+              $ ssh-keygen
+
+          *Copy the public key into the all the managed hosts
+  
+                $ ssh-copy-id ubuntu@Pvt_ip_server1
+                $ ssh-copy-id ubuntu@pvt_ip_server2
+                $ ssh-copy-id ubuntu@pvt_ip_server3
+
+
+
+9 .   Go to  controller Machine and configure
+
+      Open /etc/ansible/hosts file and add the ipaddress of all the managed hosts
+
+           sudo vim /etc/ansible/hosts
+
+           Go into insert mode by pressing i
+           Enter the pvt_ip_adresses of all the managed hosts
+=============================================================================================================
+
+Important modules in ansible:
+=============================
+
+command : This is the default module of ansible and it is used to fire linux commands on the remot managed nodes 
+
+shell : This is used for running shell scripts and linux commands that involve redirection and piping 
+
+ping : This is used to check if a remote server is pingable or not 
+
+copy : Used for copying files from the controller to the managed nodes 
+
+fetch : Used to copying files from the managed nodes to the controller 
+
+file : Used for creating files or directories on the managed nodes 
+
+user : Used for usermanagement on the managed hosts ie 
+creating,modifying and deleting users. 
+
+apt : Used for package management on the managed nodes ie installing,upgrading uninstalling etc.It works on ubuntu,debain based linux flavours. 
+
+yum : similar to apt but it works on redhatlinux,centos,fedoraOEL etc linux flavours. 
+
+git : This is used for perfroming git version controlling on the managed nodes
+
+debug : This is used for displaying the output of a module 
+
+service : this is used to start,restart or stop services 
+
+uri : This is used to check if a remote url is reachable or not . 
+
+stat : this is used to check the info about files and directories on the managed nodes. 
+
+ec2 : This is used for creating ec2 instances on the aws cloud 
+
+docker_image : This is used for executing the commands of docker that are related to docker images
+
+docker_container : This is used for container management on the managed nodes 
+
+docker_login : Used for loginin into hub.docker.com from the managed nodes. 
+
+setup: This is used to capture system facts that is system information.
+
+--------------------------------------------------------------------------------------------------------------- 
+======================================================================================================
+
+Command module:
+====================
+ 
+1>Ansible command to see the memory info on all manged nodes 
+      #ansible all –i /etc/ansible/hosts  -m command -a 'free -m' 
+
+Note: the Deafult inventory file is /etc/ansible/hosts
+      when we use Default inventory file we did not specify –i option
+
+2> Ansible command to see the memory info on all manged nodes 
+       #ansible all -m command -a 'free -m' 
+
+3> Ansible command to create an empty file on all the managed nodes 
+      #ansible all -m command -a 'touch file1'
+--------------------------------------------------------------------------------- 
+
+Default Module
+==================================
+
+Defalut module is a command module we can skip –m option
+When working on command module 
+
+1>Ansible command to see the memory info on all manged nodes 
+     #ansible all  command -a 'free -m' 
+
+2> Ansible command to create an empty file on all the managed nodes 
+     #ansible all command -a 'touch file1'
+3> List the file 
+     #ansible all -a 'ls -la'
+
+-------------------------------------------------------------------------- 
+
+Shell Module
+=============== 
+
+This is used for running shell script on managed nodes
+
+1>ansible command to execute ls -la on managed nodes and save the output into a file called file1 on on the managed node 
+       #ansible all -m shell -a 'ls -la > file1' 
+
+2>Ansible command to install docker on all managed nodes 
+    #ansible all -m shell -a 'curl -fsSL https://get.docker.com -o get-docker.sh' 
+    #ansible all -m shell -a 'sh get-docker.sh'
+
+-----------------------------------------------------------------------------------------
+
+Copy Module 
+=================
+
+This is used for copy file and Dir From controller to the managed node
+
+1>Ansible command to copy /etc/passwd file from controller to managed node
+      #ansible all –m copy –a ‘src=/etc/passwd dest=/tmp’
+
+2>ansible command to copy a file into all the managed node 
+    #touch myinventory
+    #ansible all -m copy -a 'src=myinventory dest=/tmp'
+
+3>Using copy command it is also possible to copy dir along with sub-dir into the   managed node
+        Create multiple Dir on controller machine
+                #mkdir –p d1/d2/d3/d4
+                #tree d1
+       == copy this Entire folder structure
+                #ansible all –m copy –a ‘src=d1 dest=/tmp’ 
+
+4> *Copy module can also be used for changing the ownership , group ownership and permissions of the file
+
+      ==On controller machine
+
+             Create a file
+             $Cat > file2
+                   I am learning ansible
+               Ctrl+d ==save
+
+             $ls –l ===check permission
+      ==changing the ownership,group ownership and permissions of the file
+
+           # ansible all -m copy -a 'src=file2 dest=/tmp owner=root group=root mode=765' -b 
+
+5> *Using the copy module it is possible  to send to  content into file 
+
+    ==changing the ownership,group ownership and permissions of the file
+
+     #  ansible all -m copy -a ‘content=”Welcome to TantiTech\n” dest=/tmp/file2’ -b 
+---------------------------------------------------------------------------------------------------------------------
+
+File Module 
+======================
+
+This is used for creating files and directories on the managed nodes 
+
+1>  *ansible command to create a file in /tmp on all nodes
+ 
+      #ansible all -m file -a 'name=/tmp/newfile state=touch' -b
+
+    Note: state=touch is used for creating files 
+          state=directory is used for creating directories 
+          state=absent is used for deleting files/directories 
+
+2> *Ansible command to create a directory in /tmp folder 
+
+    #ansible all -m file -a 'name=/tmp/dir1 state=directory' -b
+
+3> *ansible command to Delete a file in /tmp on all nodes 
+
+   #ansible all -m file -a 'name=/tmp/newfile state=absent' –b
+
+4> *Ansible command to create Dir  on all the managed node and change the ownership and group ownership of permission
+
+     #ansible all -m file -a 'name=/home/Ubuntu/dir2  state=directory owner=root group=ubuntu mode=777' –b
+
+
+5> *File module can also be used for changing the permissions of files and also the ownership and group ownership of files 
+
+     The below command will execute  only if Anu user and Root group is available in all nodes.
+
+      #ansible all -m file -a 'name=/tmp/file1 state=touch owner=Anu group=root mode=700' –b
+
+
+6> *We can also create complete folder structure on the managed node
+
+    #ansible all -m file -a 'name=d1/d2/d3/d4/d5  dest=/home/ubuntu state=directory' –b
+------------------------------------------------------------------------------------------------------------------
+
+apt module 
+=============
+
+This is used for package management on ubuntu based machines 
+This is used for installing or uninstalling packages on the managed hosts
+
+1> *To install tree on all the managed nodes 
+    #ansible all -m apt -a 'name=tree state=present' -b 
+
+    Note: state=present is for install 
+          state=absent is for uninstall
+          state=latest is for upgrading to latest version 
+
+
+2> *To install git from all managed nodes 
+
+     #ansible all -m apt -a 'name=git state=present' –b
+
+3> *To uninstall git from all managed nodes 
+
+    #ansible all -m apt -a 'name=git state=absent' -b 
+
+4> *To install tomcat9 on all managed nodes 
+
+     #ansible all -m apt -a 'name=tomcat9 state=present’ –b
+
+5> *To install tomcat9-admin on all managed nodes 
+
+  ansible all -m apt -a 'name=tomcat9-admin state=present’ –b
+
+6> *To install apache2 after updating the apt repository on all managed nodes 
+
+   NOTE:
+       To update apt repository on the managed nodes we can use the option
+                 
+                       Update_cache=yes
+
+    First update the server and afterword’s install apache2 package
+
+     #ansible all -m apt -a 'name=apache2 state=present update_cache=yes' –b
+
+7> *Note:
+    
+         Purge=yes
+
+   can given for removing all the configuration file .once Application is deleted
+
+         *Ansible command to uninstall apache2 and also remove its configuration file 
+
+           #ansible all -m apt -a 'name=tomcat9  state=absent purge=yes’ –b
+
+            #ansible all -m apt -a 'name=apache2  state=absent purge=yes’ –b
+-----------------------------------------------------------------------------------------------------
+
+Service module 
+======================
+
+This is used for starting stopping and restarting services 
+
+1>Ansible command to stop tomcat9 on all managed nodes 
+
+   #ansible all -m service -a 'name=tomcat9 state=stopped' -b
+
+2> Ansible command to start tomcat9 on all managed nodes 
+
+   #ansible all -m service -a 'name=tomcat9 state=started' -b
+
+   NOTE:
+        state= strarted for starting the service 
+        state=stopped for stopping the service 
+        state=restarted for restarting the service
+
+--------------------------------------------------------------------------------- 
+
+Git module
+========== 
+
+This is used to perform git version controlling on the managed nodes 
+
+1> Install git on all managed nodes and download a remote git repository 
+
+      under the /ubuntu/home dir 
+      create a mygit file              
+      
+       #ansible all -m git -a 'repo=https://github.com/sandytanti/maven-Devops.git dest=/ubuntu/home/mygit’ -b
+---------------------------------------------------------------------------------------------------------------------------
+
+uri Module 
+==================
+
+This is used to check if a remote URL is reachable or not 
+
+1>ansible command to check if google.com is reachable from all managed nodes 
+
+   #ansible all -m uri -a 'url=http://google.com status_code=200' 
+
+   ==u can view output
+      Status=200
+
+   NOTE:
+   status=200 is pass status 
+   status=-1 is failure status
+
+2> *if u give invalid URL then u ll get a status is -1
+
+  ansible command to check if rkgpllll123.com is reachable from all managed nodes 
+
+   #ansible all -m uri -a 'url=http:// rkgpllll123.com status_code=200' 
+
+   ==u can view output
+      Status=-1
+
+3> *ansible command to check if take any node PVT_IP and check apache2 (port no==80) website  is reachable from all managed nodes 
+
+   don’t need to give apache2 port number
+
+   #ansible all -m uri -a 'url=http://PVT_IP_Node status_code=200' 
+
+    ==u can view output
+       Status=200
+
+4> *ansible command to check if take any node PVT_IP and check Tomcat9 (port no==8080) website  is reachable from all managed nodes 
+
+    #ansible all -m uri -a 'url=http://PVT_IP_Node:8080 status_code=200' 
+
+      ==u can view output
+       Status=200
+----------------------------------------------------------------------------------------------------- 
+
+5> Setup module 
+========================
+
+1>This is used to capture system facts that is system information. 
+    #ansible all –m setup
+
+2> To find information about one variable we can give that variable name as on argument 
+
+       Ex: to find the kernel on remote machine is running 
+
+        $ ansible 192.168.60.101 –m steup –a ‘filter=facter_kernel’
+--------------------------------------------------------------------------------------------- 
+
+Replace Module
+==================
+
+This is used for identifying some text in a file replace it with some other text..
+
+1> Ansible command we change the port number of Tomcat9 From 8080 to 9090
+
+   Go to any managed node 
+
+   cd /etc/tomcat9
+        ls
+       sudo vim server.xml
+       Find container port
+     And replace it with 9090
+  Save and exit
+    
+    Quit the server.xml file
+
+     $ exit   ( to come back to controller )
+
+
+===  chang the port no in tomcat9 configuration file all the manage node
+ 
+=== change the port number of Tomcat9 From 8080 to 9090
+
+     #ansible all  -m replace –a ‘path=/etc/tomcat9/server.xml regexp=8080 replace=9090’ –b
+
+====Restart the service
+         ansible all -m service -a 'name=tomcat9 state=restarted' –b
+---------------------------------------------------------------------------------------------- 
+
+User Module
+===================
+
+This is used for creating user on the managed node
+
+1> Ansible command create a user (ravi) and Assign Password on All the managed nodes
+
+    #ansible all –m user –a ‘name=ravi’ password=tanti0’ –b
+
+2>*Ansible command create a user (anu) and Assign Password on All the managed nodes And also Assign user id,  home dir , Default working shell Etc 
+
+      #ansible all –m user –a ‘name=Anu password=tanti0’ uid=1234 commant=”A normal user” home=/home/Ubuntu/Anu shell=/bin/bash’ –b
+-------------------------------------------------------------------------------------------------------------------------------------------- 
+==================================================================================================================================== 
+
+
+Configuring Tomcat 9 
+============================== 
+Install Tomcat9 on all managed node and chang the port no of Tomcat from 8080 to 9090
+Restart tomcat9.. check wether Tomcat9 URL is reachable or not
+--------------------------------------------------------------------------------
+
+NOTE:
+  If Tomcat9 is already installed then first remove it
+   #ansible all -m apt -a 'name=tomcat9 state=absent’ -b
+---------------------------------------------------------------------------------  
+
+1 > Install Tomcat9 on all managed node
+
+    #ansible all -m apt -a 'name=tomcat9 state=present update_cache=yes' –b  
+2 > change the port no of Tomcat9 from 8080 to 9090
+     #ansible all  -m replace –a ‘path=/etc/tomcat9/server.xml regexp=8080 replace=9090’ –b
+3 > Restart Tomcat9
+      #ansible all -m service -a 'name=tomcat9 state=restarted' –b
+
+4 > check the URL response of tomcat on all managed nodes
+    #ansible all –m uri –a ‘url=http://pvt_ip_of_node1:9090 status=200’
+
+       o/p==200
+
+-------------------------------------------------------------------------------------------------------------------------------
+============================================================================================================================
+
+====================
+Ansible playbook
+===================
+
+1.Use Case:
+--------------  
+Install firewalld in all the managed node
+================================================================================
+---
+#playbook1.yml
+#Install firewalld in all the managed node
+
+- name: install firewalld in all the managed nodes
+  hosts: all
+  tasks:
+    - name: installed firewalld
+      apt:
+        state: present
+        update_cache: yes
+...
+===========================================================================
+[u hv to remove firewalld]
+[ansible all -m apt -a 'name=firewalld state=absent' –b]
+==================================================================================
+
+2.Use case
+===== 
+Ansible playbooks to install git on all the managed node and clone the all the repository
+==============================================================================================
+---
+#playbook2.yml
+#install git on all the managed node and clone the all the repository
+
+- name: install git and clone a remote git repo
+  hosts: all
+  tasks:
+    - name: install git
+      apt:
+        name: git
+        state: present
+    - name: clone a remote git repo
+      git:
+        repo: https://github.com/sandytanti/maven-Devops.git
+        dest: /tmp/mygit
+...
+=================================================================================================
+
+3.Use case 
+Ansible playbook for installing tree on all managed nodes
+================================================================================================
+---
+#playbook3.yml
+#install tree all the mange node
+
+- name: install tree all the managed node
+  hosts: all
+  tasks:
+    - name: tree installation
+      apt:
+        name: tree
+        state: present
+        update_cache: yes
+...
+==================================================================================================
+
+4.USE CASE
+----------------
+Ansible playbook for configure Tomcat9 and tomcat9-admin and replace the port no on all the managed node
+=================================================================================================
+---
+#playbook4.yml
+#install and configure tomcat9
+
+- name: install and configur tomcat9
+  hosts: all
+  tasks:
+    - name: install tomcat9
+      apt:
+        name: tomcat9
+        state: present
+    - name: install tomcat9-admin
+      apt:
+        name: tomcat9-admin
+        state: present
+    - name: change the port no of tomcat from 9090 to 8080
+      replace:
+       regexp: 9090
+       replace: 8080
+       path: /etc/tomcat9/server.xml
+    - name: Restart the tomcat9 server
+      service:
+        name: tomcat9
+        state: restarted
+...
+
+==========================================================================================
+5.USE CASE:
+----------
+Ansible playbook for user creation
+
+
+============================================================================
+---
+#playbook5.yml
+#Ansible playbook for user creation
+
+- name: user creation
+  hosts: all
+  tasks:
+    - name:
+      user:
+        name: ravi
+        password: tanti123
+        home: /home/ubuntu/sandeep
+        shell: /bin/bash
+...
+
+=================================================================================
+
+6.USE CASE
+--------------- 
+Ansible playbbok for craeting directory and copy passwd file to that dirctory on all managed nodes
+
+============================================================================================== 
+
+---
+#playbook6.yml
+#Ansible playbbok for craeting directory and copy passwd file to that dirctory on all managed nodes
+
+- name: creating a dir and copy passwd file to that dir on all managed nodes
+  hosts: all
+  tasks:
+    - name: creating a dir
+      file:
+        name: /tmp/newdir
+        state: directory
+    - name: copy a passwd
+      copy:
+        src: /etc/passwd
+        dest: /tmp/newdir/passwd
+...
+=========================================================================================
+
+7.USE CASE:
+----------------
+Create an ansible playbook for going to the manage nodes and fetching the all the users who are using /bin/bash shell
+==================================================================================================================
+
+---
+#playbook7.yml
+#Create an ansible playbook for going to the manage nodes and fetching the all the users who are using /bin/bash shell
+
+- name: for capturing user either /bin/bash shell
+  hosts: all
+  tasks:
+    - name: capturing info from /etc/passwd
+      shell: grep /bin/bash /etc/passwd > file1
+    - name: Fetching files
+      fetch:
+        src: /home/ubuntu/file1
+        dest: /home/ubuntu
+...
+===================================================================================================================
+
+
+8.USE CASE
+-----------------
+Install apche2 on one manage node start apache2 service and check the url response.
+===========================================================================================================
+
+---
+#playbook8.yml
+#Install apche2 on one manage node start apache2 service and check the url response.
+
+- name: install apache2 one managed node and start service
+  hosts: 172.31.1.82
+  become: yes
+  tasks:
+    - name: update apt repo and install apache2
+      apt:
+        name: apache2
+        state: present
+        update_cache: yes
+    - name: start apache2 service
+      service:
+        name: apache2
+        state: started
+    - name: checking url response
+      uri:
+        url: http://172.31.1.82
+        status_code: [200]
+...
+--------------------------------------------------------------------------------------------------------------
+
+9.Use case
+--------------
+1 Install apache2 on one managed host
+2 Edit the content of index.html file
+3 Restart apache2
+4 Check whether url is responding or not
+
+==================================================================================================
+
+---
+#playbook9.yml
+#1 Install apache2 on one managed host
+#2 Edit the content of index.html file
+#3 Restart apache2
+#4 Check whether url is responding or not
+
+- name: Install apache2 on one managed host
+  hosts: 172.31.1.82
+  become: yes
+  tasks:
+    - name: install apache2
+      apt:
+        name: apache2
+        state: present
+    - name: Edit the content of index.html file
+      copy:
+        content: "Hi This is Tanti Tech"
+        dest: /var/www/html/index.html
+    - name: Restart apache2
+      service:
+        name: apache2
+        state: restarted
+    - name: Check whether url is responding or not
+      uri:
+        url: http://172.31.1.82
+        status_code: [200]
+...
+===============================================================================================
+
+10.USE case
+-----------
+Install Tomcat9 on all manage node start Tomcat9 service and check the url response.
+=====================================================================================
+
+
+#playbook10.yml
+#Install Tomcat9 on all manage node start Tomcat9 service and check the url response.
+
+- name: install tomcat9 and start the service and check the url response
+  hosts: all
+  tasks:
+    - name: install tomact9
+      apt:
+        name: tomcat9
+        state: present
+    - name: change the port number of tomcat from 8080 to 9090
+      replace:
+        regexp: 8080
+        replace: 9090
+        path: /etc/tomcat9/server.xml
+    - name: restart tomcat9 service
+      service:
+        name: tomcat9
+        state: restarted
+    - name: pause for 3 seconds
+      pause:
+        seconds: 3
+    - name: check the url response of server1
+      uri:
+        url: http://172.31.1.82:9090
+        status_code: [200]
+    - name: check the url response of server2
+      uri:
+        url: http://172.31.9.182:9090
+        status_code: [200]
+    - name: check the url response of server3
+      uri:
+        url: http://172.31.11.146:9090
+        status_code: [200]
+...
+
+========================================================================================
+
+11.UseCase
+------------------
+Create a playbook for copying file from one managed host to another managed host
+====================================================================================
+
+---
+#playbook11.yml
+#Create a playbook for copying file from one managed host to another managed host
+
+- hosts: 172.31.1.82
+  tasks:
+   - name: Fetch file from 1st managed node
+     fetch:
+       src: /home/ubuntu/file1
+       dest: /home/ubuntu
+- hosts: 172.31.9.182
+  tasks:
+    - name: sending file from controller to managed node2
+      copy:
+        src: /home/ubuntu/172.31.1.82/home/ubuntu/file1
+        dest: /home/ubuntu
+...
+
+=====================================================================================================
+
+===================
+Variables
+===================
+
+Variables are classified into 3 types: 
+Global scope:
+        Global Scope are declared at the command prompt and they 
+        can effect all the plays in the complete playbook
+Play scope:
+        PlayScope variables are declared at the level of individual
+        plays and they will work on only a single play
+Host scope:
+        Host Scope variables defined to work on a group of hosts
+        or on a single host as given in the inventory file
+================================================ ===============================
+
+
+===============================
+Global Scope Variables 
+===============================
+
+12.Use case:
+-----------------------
+
+Ansible playbook installing/uninstalling software packages using global scope variable
+=========================================================================================
+
+---
+#playbook12.yml
+#Ansible playbook installing/uninstalling software packages using global scope variable
+
+- name: installing/uninstalling software packages
+  hosts: all
+  tasks:
+    - name: installing/uninstalling software
+      apt:
+        name: "{{a}}"
+        state: "{{b}}"
+        update_cache: "{{c}}"
+...
+=====================================================================================
+To run this playbook command prompt for installing maven without updating the repository: 
+
+          $ ansible-playbook playbook12.yml --extra-vars “a=maven b=present c=no” -b 
+
+Similarly we can use the same the playbook for uninstalling git after updating apt repository. 
+
+        $ansible-playbook playbook12.yml – extra-vars “a=git b=absent c=yes” –b
+=============================================================================================================
+
+13.USE CASE
+---------------
+
+Ansible playbook for creating user and copying file into user home dir
+=======================================================================================
+
+---
+#playbook13.yml
+#Ansible playbook for creating user and copying file into user home dir
+
+- name: creating a user and copying file into user home dir
+  hosts: all
+  tasks:
+    - name: creating a user
+      user:
+        name: "{{a}}"
+        password: "{{b}}"
+        home: "{{c}}"
+        uid: "{{d}}"
+    - name: copying a file
+      copy:
+        src: "{{e}}"
+        dest: "{{f}}"
+...
+
+=====================================================================================================================
+To Execute the above playbook
+  # ansible-playbook playbook13.yml --extra-vars "a=mohan b=12345 c=/home/mohan d=2223 e=/etc/passwd f=/home/mohan" -b
+
+=========================================================================================================================== 
+
+==============================
+Playscope variable
+================================
+
+14.USE case
+--------------------
+Create an ansible playbook for installing Tomcat9 on all manage nodes after updating the apt repository
+==============================================================================================================
+---
+#playbook14.yml
+#Create an ansible playbook for installing Tomcat9 on all manage nodes after updating the apt repository
+
+- name: tomcat9
+  hosts: all
+  vars:
+    - a: tomcat9
+    - b: present
+    - c: no
+  tasks:
+    - name: install
+      apt:
+        name: "{{a}}"
+        state: "{{b}}"
+        update_cache: "{{c}}"
+...
+====================================================================================================================
+
+$ ansible-playbook playbook14.yml -b
+
+
+NOTE:
+The above playbook works like a template whose default behaviour is to install tomcat9 
+but we can bypass the behaviour make it work on some other package by passing global variable using -- extra-vars
+
+$ ansible-playbook playbook14.yml –-extra-vars “a=git” -b 
+========================================================================================================================
+
+15.USE CASE:
+----------- 
+Create a playbook for installing apache2 using playscope varaible.
+The same playbook should be capable of working on installation or uinstallation of other packages
+====================================================================================================== 
+
+---
+#playbook15.yml
+#Create a playbook for installing apache2 using playscope varaible.
+#The same playbook should be capable of working on installation or uninstallation of other packages
+
+- name: installing apache2 using playscope varaible
+  hosts: all
+  vars:
+    - a: apache2
+    - b: present
+    - c: yes
+  tasks:
+    - name: installing apache2
+      apt:
+        name: "{{a}}"
+        state: "{{b}}"
+        update_cache: "{{c}}"
+...
+---------------------------------------------------------------------------------------------------------------------
+
+ #ansible-playbook playbook15.yml -b
+
+
+The above playbook works as a template whose default behaviour is installing apache 
+but we can make the same playbook to install any other package instead of apache2 by passing the values as global scope
+
+# ansible-playbook playbook15.yml --extra-vars "a=git b=present c=no" -b
+============================================================================================================================= 
+
+
+===============================
+Host Scope Variables 
+============================================
+These are categorised into 2 types 
+
+1 Variables to work on a group of hosts 
+2 Variables to work on a single host
+================================================ 
+
+Creating Groups in a Ansible inventory file
+        Sudo vim /etc/ansible/hosts 
+        
+        [webserver]
+         172.31.1.82
+         172.31.9.182
+        [appserver]
+         172.31.11.146
+       [server:children]
+         Webserver
+         appserver
+
+
+If I use webserver , it will work on 2 server
+If I use appserver , it will work on 1 server
+
+you can group the webserver and appserver
+
+[server:children]
+Webserver
+appserver
+if you use only server instead of host , you can execute webserver and appserver
+
+-------------------------------------------------------------------------------------------
+==================================================================================
+
+Variable to work on a group of hosts
+===========================================
+
+
+16.usecase
+--------------
+Create a playbook for user creation on the webserver group 
+===================================================================
+
+1 Change dir to the folder where all playbooks are present 
+      cd path_of_folder_where_playbooks_are_present 
+
+2 Create a new dir "group_vars
+          mkdir group_vars
+                cd group_vars
+3 Create a file whose name should be similar to the group name in our inventory file 
+
+ 
+ vim webserver
+ 
+enter user name , password , path, uid
+
+a: rajiv
+b: 12345
+c: /home/ubuntu/rajiv
+d: 8888
+
+4 Change dir back to the fodler where the playbooks are present 
+      cd ..
+
+5 Create a playbook for user creation on the webserver group 
+
+     vim playbook16.yml 
+
+---
+#playbook16.yml
+#Create a playbook for user creation on the webserver group
+
+- name: user creation
+  hosts: webserver
+  tasks:
+    - name: creating user
+      user:
+        name: "{{a}}"
+        password: "{{b}}"
+        home: "{{c}}"
+        uid: "{{d}}"
+...
+
+---------------------------------------------------------------------------------------- 
+
+Execute this playbook
+ansible-playbook playbook16.yml –b
+==========================================================================================
+
+
+Variables to work on a single host
+=====================================================
+
+16.USE CASE:
+---------------- 
+
+1 Change dir to the folder where all playbooks are present 
+    cd path_of_playbooks_folder 
+
+2 Create a folder "host_vars" 
+    mkdir host_vars 
+
+3 Change dir to host_vars folder 
+     cd host_vars
+
+4 Create a file whose name is same as an ipaddress of one machine in the inventory file
+
+  vim 172.31.10.186
+
+   a: default-jdk
+   b: present
+   c: no
+save and exit 
+
+
+6.vim playbook16.yml
+installing java using host scope variables 
+
+
+---
+#playbook17.yml
+#installing java using host scope variables
+
+- name: installing java using host scope variables
+  hosts: 172.31.1.82
+  tasks:
+    - name: install java
+      apt:
+        name: "{{a}}"
+        state: "{{b}}"
+        update_cache: "{{c}}"
+...
+-----------------------------------------------------------------------------------------
+
+ansible-playbook playbook17.yml -b
+===============================================================================================
+
+=====================
+Loops in ansible
+=======================
+Loops can be implemented in ansible in 2 ways 
+
+1 with_items 
+2 with_sequence 
+
+with_items is used to pass data to the module and depending on how many sets of data are present with_items will loop those many number of times
+with_sequence is used to run a module specific number of times based on a count
+
+==============================================================================
+
+18. USE CASE: 
+---------------  
+Create a playbook for installing different  software  Application…
+======================================================================================
+
+---
+#palybook18.yml
+#install multiple packages in using with_items
+
+- name: implementing loops
+  hosts: all
+  tasks:
+    - name: installing s/w packages
+      apt:
+        name: "{{item}}"
+        state: present
+        update_cache: no
+      with_items:
+      - tree
+      - default-jdk
+      - git
+...
+===========================================================================
+
+
+
+
+19.UseCase
+================
+
+Create playbook for installing multiple packages like maven,apache2,tree etc
+
+---
+#palybook19.yml
+#install multiple packages in using with_items
+
+- name: implementing loops
+  hosts: all
+  tasks:
+    - name: installing s/w packages
+      apt:
+        name: "{{item}}"
+        state: present
+        update_cache: no
+      with_items:
+      - tree
+      - apache2
+      - maven
+...
+
+---------------------------------------------------------------------
+
+20.UseCase
+==========
+
+Create playbook for installaing or unistalling different packages and for updating or not updating the apt repository
+================================================================================================
+
+---
+#playbook20.yml
+#Create playbook for installaing or unistalling different packages and for updating or not updating the apt repository
+
+- name: implementing loops
+  hosts: all
+  tasks:
+    - name: installing/uninstalling s/w packages
+      apt:
+        name: "{{item.a}}"
+        state: "{{item.b}}"
+        update_cache: "{{item.c}}"
+      with_items:
+        - {a: tree,b: present,c: yes}
+        - {a: default-jdk,b: present,c: yes}
+        - {a: git,b: present,c: yes}
+...
+======================================================================================
+
+==============
+21.UseCase
+==============
+Create a playbook for creating multiple users and also files or directories in those user home directories
+================================================================================================================
+
+---
+#playbook21.yml
+#creating multiple users and copying some files into the users home dir
+
+- name: creating a user and copying a config file
+  hosts: all
+  tasks:
+    - name: creating a users
+      user:
+        name: "{{item.a}}"
+        password: "{{item.b}}"
+        home: "{{item.c}}"
+      with_items:
+        - {a: ram,b: tanti0,c: /home/ram}
+        - {a: sandy,b: tanti0,c: /home/sandy}
+    - name: copying file
+      copy:
+        src: "{{item.a}}"
+        dest: "{{item.b}}"
+      with_items:
+        - {a: /etc/passwd,b: /home/ram}
+        - {a: /etc/passwd,b: /home/sandy}
+...
+
+================================================================================================================
+
+
+22.UseCase
+-----------
+Create a playbook for creating multiple users and also files or directories in those user home directories
+===================================================================================================
+
+---
+#playbook22.yml
+#creating multiple users and also files or directories in those user home directories
+
+- name: creating a user and creating a file
+  hosts: all
+  tasks:
+    - name: creating a users
+      user:
+        name: "{{item.a}}"
+        password: "{{item.b}}"
+        home: "{{item.c}}"
+      with_items:
+        - {a: mohan,b: tanti1234,c: /home/mohan}
+        - {a: shiv,b: tanti1234,c: /home/shiv}
+    - name: creating a file
+      file:
+        name: "{{item.a}}"
+        state: "{{item.b}}"
+        mode: "{{item.c}}"
+      with_items:
+        - {a: /home/mohan/mhfile,b: touch,c: 777}
+        - {a: /home/shiv/d6,b: directory,c: 000}
+...
+
+=========================================================================================================
+
+Conditional statement in ansible:
+=====================================================
+
+When conditions
+-----------------
+If we want to execute a specific task only when
+a particular condition is true then we can use
+"when" conditions
+====================================================================================
+
+----------------
+23.USE CASE:
+----------------- --- 
+Ansible playbooks for implementing When condition
+Install tree when a=10
+============================================================================================
+
+---
+#playbook23.yml
+#Ansible playbooks for implementing When condition Install tree when a=10
+
+- name: implementing when condition
+  hosts: all
+  vars:
+    - a: 10
+  tasks:
+    - name: install treee
+      apt:
+        name: tree
+        state: present
+        update_cache: yes
+      when:
+        a ==10
+...
+
+
+------------------------------------------------------------------------------------------------
+
+
+
+=====================
+Debug Module=
+======================
+-----------------
+This module is used displaying the output of any executed module. 
+The results can be captured in a register variable and using debug module display on the screen..
+ this o/p generally come in Json file format ..
+-====================================================================================================
+
+24.Use case
+------------------  
+Ansible playbook  for executing few module and displaying the output..
+========================================================================
+
+---
+#playbook24.yml
+#Ansible playbook  for executing few module and displaying the output.
+
+- name: executing few module and displaying the output.
+  hosts: all
+  tasks:
+    - name: creating a file
+      file:
+        name: file1
+        state: touch
+      register: a
+    - name: displaying output of file module
+      debug:
+        var: a
+    - name: copy a file
+      copy:
+        src: /etc/passwd
+        dest: /tmp
+      register: b
+    - name: displaying output of copy module
+      debug:
+        var: b
+...
+
+=====================================================================================
+
+25. use case
+------------ 
+Create an ansible playbook for installing apache2 and capture the results 
+using register and display them on the screen using debug module
+=========================================================================================================================
+---
+#playbook25.yml
+#installing apache2 and capture the results using register and display them on the screen using debug module
+
+- name: using debug and register
+  hosts: all
+  tasks:
+    - name: installing apache2
+      apt:
+        name: apache2
+        state: present
+      register: results
+    - name: displaying the output
+      debug:
+        var: results
+...
+==================================================================================================
+
+
+
+Stat module
+---------------
+==============
+This is used to find the statistics of a directory or file
+We can use it to find if a file or dir is present on a managed  host. 
+Similar we can check its permissions, ownership etc
+
+======================================================================================
+
+
+---
+#playbook26.yml
+#Ansible playbook is check if dir is present. And if it is present create a file in it
+
+- name: check if dir is present. And if it is present create a file in it
+  hosts: all
+  tasks:
+    - name: check if dir is present
+      stat:
+        path: /var
+      register: results
+    - name: displying output of the above stat module
+      debug:
+        var: results
+...
+---------------- -----------------------------------------------------
+ansible-playbook playbook26.yml -b
+==========================================================
+take the output 
+resulets.stat.exists == true
+
+and edit playbook
+
+-------------------------------------------------------------------------------------------
+---
+#playbook26.yml
+#Ansible playbook is check if dir is present. And if it is present create a file in it
+
+- name: check if dir is present. And if it is present create a file in it
+  hosts: all
+  tasks:
+    - name: check if dir is present
+      stat:
+        path: /var
+      register: results
+    - name: displying output of the above stat module
+      debug:
+        var: results
+    - name: create a file
+      file:
+        name: /var/myfile
+        state: touch
+      when:
+        results.stat.exists == true
+
+...
+
+-----------------------------------------------------------------------------
+
+ansible-playbook playbook26.yml -b
+==========================================================
+----------------------------------------------------------------------------------------------------
+
+=================
+Handlers
+------------
+================
+If we want to execute any module only if a previous modules is executed successfully and also it has done some changes we can use handlers
+
+Handlers are used in combination with "notify" keyword
+A successful module sends its result to notify and based on that the handler gets execute
+Handlers are given in alignment with the tasks
+Handlers are executed only after all the tasks are execute
+If multiple modules call the same handlers multiple time
+the handler will be executed only once
+The handlers are executed only in the order that they are given in the handlers section and not in the order that they are called in the tasks section
+------------------------------------------------------------------------------------  
+
+
+27. UseCase
+============
+
+Install apache2
+Edit index.html file
+If edit is successful ie (done some changes) restart apache2
+
+-------------------------------------------------------------------------------
+
+---
+#playbook27.yml
+#install apache2 and Edit index.html file
+
+- name: using handlers
+  hosts: all
+  tasks:
+    - name: installing apache2
+      apt:
+        name: apache2
+        state: present
+    - name: Edit index.html
+      copy:
+        content: "Welcome to Tanti Technologies"
+        dest: /var/www/html/index.html
+      notify: restart_apache2
+  handlers:
+   - name: restart_apache2
+     service:
+        name: apache2
+        state: restarted
+...
+----------------------------------------------------------------------------
+
+Go to web browse take public_ip_of_any node and check website
+========================================================================= 
+
+
+28.USE CASE
+----------------- 
+Install apache2 and Edit index.html file .If edit is successful ie (done some changes) restart apache2
+And check website response using status_code= [200]
+==============================================================================================
+
+
+---
+#playbook28.yml
+#Install apache2 and Edit index.html file .If edit is successful ie (done some changes) restart apache2
+#And check website response using status_code= [200]
+
+- name: using handlers
+  hosts: all
+  tasks:
+    - name: install apache2
+      apt:
+        name: apache2
+        state: present
+      notify: check url response
+    - name: Edit index.html
+      copy:
+        content: "Welcome to Tanti Technologoies Bangalore"
+        dest: /var/www/html/index.html
+      notify: restart_apache2
+  handlers:
+    - name: restart_apache2
+      service:
+        name: apache2
+        state: restarted
+    - name: check url response
+      uri:
+        url: "{{item}}"
+        status_code: [200]
+      with_items:
+        - http://172.31.6.245
+        - http://172.31.2.238
+        - http://172.31.1.99
+...
+
+-------------------------------------------------------------------------
+
+ansible-playbook playbook28.yml -b
+------------------------------------------------------
+
+
+If u Run playbook again u wont get handlers section output
+ansible-playbook playbook28.yml -b
+
+------------------------------------------------------------------- 
+
+Open web browser and Go to any nodes take public ip:80
+------------------------------------------------------------------------------
+
+======================================================================================== 
+
+
+
+Error Handling
+------------------------
+If specific module in ansible fails the execution of the playbook stop over there. If we know that specific module might generate an error and still we  want to continuous the  execution of the program we use error handling…
+
+Error handling is implemented using block, rescue and always section..
+The pieces of code which might generate an error should be given in block section….if it fails the control comes into the rescue section …always section is executed  every time irrespective  of whether block section passes or fails…..
+==========================================================================================
+
+29.USE CASE
+---------------
+Ansible playbooks install the tomcat8 to all the managed…node…if tomcat8 is not available ..install tomcat9…. And check the URL response 
+==========================================================================================================================================
+---
+#playbook29.yml
+#Ansible playbooks install the tomcat8 to all the managed…node…if tomcat8 is not available ..
+#install tomcat9…. And check the URL response
+
+- name: Error handling
+  hosts: all
+  tasks:
+    - block:
+      - name: install tomcat8
+        apt:
+          name: tomcat8
+          state: present
+      rescue:
+        - name: install tomcat9
+          apt:
+            name: tomcat9
+            state: present
+      always:
+        - name: check url response
+          uri:
+            url: "{{item}}"
+            status_code: [200]
+          with_items:
+            - http://172.31.6.245:8080
+            - http://172.31.2.238:8080
+            - http://172.31.1.99:8080
+...
+
+========================================================================================
+
+30.use case
+==============
+Ansible playbook for installing tomcat8 on Ubuntu machine using apt module and using using yum module on red hat Linux machine…
+===================================================================================================================================
+
+---
+#palybook30.yml
+#Ansible playbook for installing tomcat8 on Ubuntu machine using apt module and using using yum module on red hat Linux machine…
+
+- name: Error Handling
+  hosts: all
+  tasks:
+    - block:
+      - name: install tomcat9
+        apt:
+          name: tomcat9
+          state: present
+      rescue:
+        - name: install tomcat9
+          yum:
+            name: tomcat9
+            state: present
+...
+
+
+=================================================================================
+
+
+Tagging Module:
+------------------------ 
+Tags are used for assigning allies to module.. once allies Is assigned it  is possible execute only specific module in the play book. this helps us and getting much more modular control on execution of the playbook
+============================================== 
+or
+The modules in a playbook can be given specific tags (names)
+Using these tags it becomes possible to execute only that particular module rather than executing the entire playbook
+=========================================================================================================================================
+
+31.USE CASE
+------------------
+
+Installing tree and creating user using tag
+===============================================================
+
+---
+#playbook31.yml
+# Installing tree and creating user using tag
+
+- name: Installing tree and creating user using tag
+  hosts: all
+  tasks:
+    - name: installing tree
+      apt:
+        name: tree
+        state: present
+      tags:
+        tree_installation
+    - name: create user
+      user:
+        name: rajiv
+        password: rajiv
+      tags:
+        user_creation
+    - name: create a file
+      file:
+        name: rajivfile
+        state: touch
+...
+
+=============================================================
+
+ansible-playbook playbook31.yml -b
+
+To execute all the tagged module
+    ansible-playbook playbokk31.yml --tags=tagged -b
+
+To execute all the untagged modules
+     ansible-playbook playbook31.yml --tags=untagged -b
+
+
+To execute modules with a specific tag name
+         ansible-playbook playbook31.yml --tags=user_creation -b
+==========================================================================================
+
+32.Use case
+===============
+Install tree apahce2 and git. tag tree and apache2 but do not tag git installation
+
+================================================================================================
+---
+#playbook32.yml
+# Install tree apahce2 and git. tag tree and apache2 but do not tag git installation
+
+- name: Installing tree and creating user using tag
+  hosts: all
+  tasks:
+    - name: installing tree
+      apt:
+        name: tree
+        state: present
+      tags:
+        tree_installation
+    - name: installing apache2
+      apt:
+        name: apache2
+        state: present
+      tags:
+        apache2_installation
+    - name: inatallation git
+      apt:
+        name: git
+        state: present
+...
+==================================================================================
+
+ansible-playbook playbook32.yml -b
+
+To execute all the tagged module
+    ansible-playbook playbokk32.yml --tags=tagged -b
+
+To execute all the untagged modules
+     ansible-playbook playbook32.yml --tags=untagged -b
+
+
+To execute modules with a specific tag name
+         ansible-playbook playbook32.yml --tags=apache2_installation -b
+==========================================================================================
+
+
+
+
+Include module
+------------------------
+Multiple playbooks can be called form one single playbook using "include"
+This helps us in creating playbooks which are more modular
+---------------------------------------------------------------------------------
+This is used for executing child playbook.. from a parent playbook.. the child playbook contains only modules information..
+This will be called from a parent playbook using the include module…
+------------------------------------------------------------------------------------ 
+
+
+
+33.USE CASE
+---------------------
+Install maven using apt
+=====================================
+
+Child playbook
+-------------
+Vim playbook33.yml
+
+---
+#child playbook
+#install maven
+
+- name: install maven
+  apt:
+    name: maven
+    state: present
+    update_cache: yes
+...
+
+
+parent playbook
+-----------------------
+vim playbook34.yml
+
+---
+#parent playbook
+
+- name: calling child playbooks
+  hosts: all
+  tasks:
+    - name: Execute the child playbook
+      include: playbook33.yml
+...
+---------------------------------------------------------------
+
+ansible-playbook playbook34.yml –b
+----------------------------------------------------------------
+====================================================================================== 
+
+35.USE CASE
+--------------------
+Create 4 plays 
+1 for installing apache using apt
+2 editing the content of index.html using copy
+3 restarting apache2 using service
+4 checking url is reachable using uri module
+========================================================================= 
+
+=================================================
+vim playbook35.yml
+
+child playbook
+-----------------
+===============
+
+#child playbook
+#installing apache using apt
+
+- name: install apache2
+  apt:
+    name: apache2
+    state: present
+    update_cache: yes
+...
+
+---------------------------------------------------------
+vim playbook36.yml
+
+---
+#editing the content of index.html using copy
+
+- name: Edit index.html
+  copy:
+    content: "TantiTECH\n"
+    dest: /var/www/html/index.html
+...
+--------------------------------------------------------
+
+vim playbook37.yml
+
+---
+#restarting apache2 using service
+
+- name: restart apache2
+  service:
+    name: apache2
+    state: restarted
+...
+---------------------------------------------------------------------------
+
+vim playbook38.yml
+
+---
+#checking url is reachable using uri module
+
+- name: check url response
+  uri:
+    url: "{{item}}"
+    status_code: [200]
+  with_items:
+    - http://172.31.6.245
+    - http://172.31.2.238
+    - http://172.31.1.99
+...
+
+----------------------------------------------
+
+Parent playbook
+================
+
+vim playbook39.yml
+
+
+---
+# calling multiple child playbooks
+
+- name: calling multiple child playbooks
+  hosts: all
+  tasks:
+    - name: call child playbooks for configure apache2
+      include: "{{item}}"
+      with_items:
+        - playbook35.yml
+        - playbook36.yml
+        - playbook37.yml
+        - playbook38.yml
+...
+
+---------------------------------------------------------------------------------
+
+ansible-playbook playbook39.yml –b
+======================================================================================= 
+
+
+
+================================
+Ansible docker automation
+=============================
+
+36.Use case
+------------
+Playbook for installing docker and docker-py on all managed node
+
+========================================================================
+
+---
+#playbook40.yml
+#Playbook for installing docker and docker-py on all managed node
+
+- name: setup of docker for ansible
+  hosts: all
+  tasks:
+    - name: install python3-pip
+      apt:
+        name: python3-pip
+        state: present
+        update_cache: yes
+    - name: Download and install Docker and docker-py
+      shell: "{{item}}"
+      with_items:
+        - curl -fsSL https://get.docker.com -o install-docker.sh
+        - sudo sh install-docker.sh
+        - pip install docker
+...
+
+
+---------------------------------------------------------------------
+
+37.Use case
+========= 
+Install tomcat as a container on all managed nodes
+============================================================================
+
+vim playbook41.yml
+
+
+---
+#playbook41.yml
+#Install tomcat as a container on all managed nodes
+
+- name: working on tomcat container
+  hosts: all
+  tasks:
+    - name: start tomcat as a container
+      docker_container:
+        image: tomcat
+        name: webserver
+...
+
+================================================================================
+
+ansible-playbook playbook33.yml –b
+----------------------------------------------
+
+Go to any Nodes:
+Ssh <Pvt_ip_of_nodes>
+
+sudo docker ps -a
+sudo docker container ls
+================================================================================
+
+
+38.Use case
+========= 
+Install tomcat as a container on all managed nodes..and stop ,remove the container from all managed nodes
+
+=============================================================================================================
+vim palybook42.yml
+
+---
+#palybook42.yml
+#Install tomcat as a container on all managed nodes..and stop ,remove the container from all managed nodes
+
+- name: working on tomcat container
+  hosts: all
+  tasks:
+    - name: start tomcat as a container
+      docker_container:
+        image: tomcat
+        name: webserver
+    - name: stop tomcat container
+      docker_container:
+        name: webserver
+        state: stopped
+    - name: remove tomcat container
+      docker_container:
+        name: webserver
+        state: absent
+...
+
+
+--------------------------------------------------------------------------------------
+
+ansible-playbook playbook42.yml –b
+
+-------------------------------------------------------------------------------------
+
+Go to any Nodes:
+Ssh <Pvt_ip_of_nodes>
+
+
+sudo docker ps -a
+sudo docker container ls
+======================================================================================= 
+
+39.Use case
+===========
+Implementing docker compose using ansible
+
+Create a development environment where WordPress container is linked with MySQL container on all the managed nodes
+
+-----------------------------------------------------------------------------------------------------------------------
+
+vim palybook43.yml
+
+
+---
+#playbook43.yml
+#Implementing docker compose using ansible
+#Create a development environment where WordPress container is linked with MySQL container on all the managed nodes
+
+- name: Implementing docker compose using ansible
+  hosts: all
+  tasks:
+    - name: start MYSQL as a container
+      docker_container:
+        image: mysql:5
+        name: mydb
+        env:
+          MYSQL_ROOT_PASSWORD: tanti
+    - name: start wordpress as a container and link with mysql container
+      docker_container:
+        image: wordpress
+        name: mywordpress
+        ports:
+          - 8888:80
+        links:
+          - mydb:mysql
+...
+------------------------------------------------------------------------------
+
+ansible-playbook playbook43.yml -b
+----------------------------------------------------------------------------
+
+
+Go to any Nodes:
+Ssh <Pvt_ip_of_nodes>
+
+sudo docker ps -a
+sudo docker container ls
+
+
+
+Take a public ip of any nodes and open web browser 
+Pub_ip_of_node:8888
+
+--------------------------------------------------------------------------------------         
+
+Delete all container
+
+ ansible all -m shell -a 'docker rm -f $(docker ps -aq)' -b
+-------------------------------------------------------------------------------------------
+=========================================================================
+
+
+40.Use case
+------------------
+Ansible playbook for creating Jenkins container… and linking with 
+two tomcat container
+
+----------------------------------------------------------------------------------
+
+
+vim palybook44.yml
+
+---
+#playbook44.yml
+#Ansible playbook for creating Jenkins container… and linking with two tomcat container
+
+- name: create CI-CD environment using docker and ansible
+  hosts: all
+  tasks:
+    - name: create jenkins as a container
+      docker_container:
+        image: "jenkins/jenkins:lts"
+        name: devserver
+        ports:
+          - 5555:8080
+    - name: start as a tomcat container (qaserver and prodserver)
+      docker_container:
+        image: tomcat
+        name: "{{item.a}}"
+        ports:
+          - "{{item.b}}"
+        links:
+          - devserver:jenkins
+      with_items:
+        - {a: qaserver,b: "6666:8080"}
+        - {a: prodserver,b: "7777:8080"}
+...
+--------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+
+ansible-playbook playbook43.yml -b
+----------------------------------------------------------------------------
+
+
+Go to any Nodes:
+Ssh <Pvt_ip_of_nodes>
+
+sudo docker ps -a
+sudo docker container ls
+
+
+
+Take a public ip of any nodes and open web browser 
+Pub_ip_of_node:5555
+
+
+Take a public ip of any nodes and open web browser 
+Pub_ip_of_node:7777
+
+
+--------------------------------------------------------------------------------------         
+
+Delete all container
+
+ ansible all -m shell -a 'docker rm -f $(docker ps -aq)' -b
+========================================================================================== 
+
+
+41.Use case
+----------
+Ansible playbook for creating 10 httpd container on all the managed nodes
+-------------------------------------------------------------------------------- 
+
+vim palybook45.yml
+
+---
+#playbook45.yml
+#Ansible playbook for creating 10 httpd container on all the managed nodes
+
+- name: creating 10 httpd container on all the managed nodes
+  hosts: all
+  tasks:
+    - name: start 10 httpd container
+      docker_container:
+        image: httpd
+        name: "container{{item}}"
+      with_sequence: count=10
+...
+
+-----------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+
+ansible-playbook playbook45.yml -b
+----------------------------------------------------------------------------
+
+
+Go to any Nodes:
+Ssh <Pvt_ip_of_nodes>
+
+sudo docker ps -a
+sudo docker container ls
+
+
+--------------------------------------------------------------------------------------         
+
+Delete all container
+
+ ansible all -m shell -a 'docker rm -f $(docker ps -aq)' -b
+========================================================================================== 
+
+
+
+
+42.Use case
+--------------
+Ansible program  for downloading  postgres images  on all the managed nodes
+-------------------------------------------------------------------------------
+
+vim palybook46.yml
+
+---
+#playbook46
+#Ansible program  for downloading  postgres images  on all the managed nodes
+
+- name: Download Docker image
+  hosts: all
+  tasks:
+    - name: Download images from dockerhub
+      docker_image:
+        name: postgres
+        source: pull
+...
+
+------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+
+ansible-playbook playbook46.yml -b
+----------------------------------------------------------------------------
+
+
+Go to any Nodes:
+Ssh <Pvt_ip_of_nodes>
+
+sudo docker images
+----------------------------------------------------------------------------
+
+
+43.Use case
+------------------------
+Ansible playbook for login into remote dockerhub repository and pushed the costimize docker images
+
+
+
+====================================================================================
+
+Go to  managed node
+  Ssh  pvt_ip_of_node
+Create a alpine image.. and create a file in it
+
+
+
+ubuntu@ip-172-31-6-245:~$ sudo docker run --name b1 -it alpine
+-------------------------
+Unable to find image 'alpine:latest' locally
+latest: Pulling from library/alpine
+8a49fdb3b6a5: Pull complete
+Digest: sha256:02bb6f428431fbc2809c5d1b41eab5a68350194fb508869a33cb1af4444c9b11
+Status: Downloaded newer image for alpine:latest
+/ # touch file1 file2
+/ # exit
+
+
+ubuntu@ip-172-31-6-245:~$ sudo docker commit b1 sandytanti/myalpine
+-------------------------
+sha256:a29a9de5a74266edb04b322e533e4916034ddefc00145a9cab9e9e676010f499
+
+ubuntu@ip-172-31-6-245:~$ sudo docker images
+
+REPOSITORY             TAG       IMAGE ID       CREATED          SIZE
+
+sandytanti/myalpine   latest    a29a9de5a742   15 seconds ago   7.33MB
+
+
+-------------------------------------------------------------------------------------------
+
+exit
+----------------------------------------------------------------------------------
+
+
+Go to playbooks/
+
+vim playbook47.yml
+
+---
+#playbook47.yml
+#Ansible playbook for login into remote dockerhub repository and pushed the costimize docker images
+
+- name: push image from managed node into dockerhub
+  hosts: 172.31.2.238
+  tasks:
+    - name: Login into Docker hub
+      docker_login:
+        username: sandytanti
+        password: Aix@1234567
+    - name: push the customised docker image
+      docker_image:
+        name: sandytanti/myalpine
+        push: yes
+        source: local
+...
+
+----------------------------------------------------------------------------------------------------------- 
+
+Go to docker hub and check 
+====================================================================================================================
+
+
+Ansible vault
+===============
+
+This is a security mechanism of ansible using which we can hide the content of the playbook… 
+these playbook can be access only people who hv the password
+-----------------------------------------------------------------------------------------------------
+
+44..Use case 
+------------------
+
+To create a vault-playbook
+ ansible-vault create playbook41.yml
+    passwd:
+    re-enter: 
+
+---
+#playbook48.yml
+#To create a vault-playbook
+
+- name: create a user and copy file
+  hosts: all
+  tasks:
+    - name: create a user
+      user:
+        name: abhi
+        password: 12345
+        home: /home/ubuntu/abhi
+    - name: copy file
+      copy:
+        src: /ecc/passwd
+        dest: /home/ubuntu/abhi
+...
+
+----------------------------------------------------
+
+if any one open this playbook they wont get data
+       vim playbook48.yml
+----------------------------------------------------------
+
+To see the content of vault playbook
+   ansible-vault view playbook48.yml
+----------------------------------------------------------------
+
+To convert regular playbook to vault-playbook
+
+  Take any regular playbook25.yml
+
+     ansible-vault encrypt playbook48.yml
+
+
+No one will open this file, you can’t view the data
+
+   Vim playbook25.yml
+--------------------------------------------------------------------
+
+
+To convert vault-playbook to regular playbook
+
+       ansible-vault decrypt playbook25.yml
+
+Now open this file
+    vim playbook25.yml
+you can view the data
+------------------------------------------------------------------
+
+=================
+Ansible Roles
+=================
+
+Roles provide a framework for fully independent, or interdependent collections of variables, tasks, files, templates, and modules. 
+
+In Ansible, the role is the primary mechanism for breaking a playbook into multiple files. This simplifies writing complex playbooks, and it makes them easier to reuse. The breaking of playbook allows you to logically break the playbook into reusable components. 
+
+Each role is basically limited to a particular functionality or desired output, with all the necessary steps to provide that result either within that role itself or in other roles listed as dependencies. 
+
+Roles are not playbooks. Roles are small functionality which can be independently used but have to be used within playbooks. There is no way to directly execute a role. Roles have no explicit setting for which host the role will apply to. 
+
+Top-level playbooks are the bridge holding the hosts from your inventory file to roles that should be applied to those hosts.
+---------------------------------------------------------------------------------- 
+Role is a pre-define folder structure which contain everything which is necessary  for configuring one s/w application … the advantages of  role is the support greater  reusability …roles can be downloaded from the cloud site of ansible called as ansible glaxy… 
+
+
+=================================================================================================================================
+
+Create and Configuring Roles
+
+To create Roles move into /etc/ansible/roles folder
+cd /etc/ansible/roles 
+ansible-galaxy init apache –offline
+Note: role is created with apache after executing above command. Using tree see the role structure  (tree apache)
+------------------------------------------------------------------------------------------------------------
+
+ubuntu@ip-172-31-15-3:/etc/ansible/roles$ sudo tree apache2
+apache2
+├── README.md
+├── defaults
+│   └── main.yml
+├── files
+├── handlers
+│   └── main.yml
+├── meta
+│   └── main.yml
+├── tasks
+│   └── main.yml
+├── templates
+├── tests
+│   ├── inventory
+│   └── test.yml
+└── vars
+    └── main.yml
+
+
+
+README.md:
+This is simple create in English which contain details information about the purpose of this roles.
+
+Defaults:
+This is also used for storing information about roles but it is stored in ymal format.. 
+we can also store variables of lesser priory in this folder 
+
+files:
+this is used for storing all the static configuration files which are necessary  for configuring this  application on the remote server
+
+handlers:
+handlers is a module  which is executed if some other module is executed seccuseccfully .. and it has made some changes .. all such handlers should be stored in this folder .
+meta:
+data about data is called as meta data …this folder is used for storing info about role like:
+  who created the role ,when it was created  ,…which version is  support etc
+
+tasks:
+the actual configuration that should be perform on the remote server should be stored in this folder 
+
+templates:
+This is used for storing dynamic configuration file
+Tests:
+The module which generally test or check is remote configuration is done properly should be saved in this folder..
+
+Vars:
+All the variables that are necessary for configuring this application should be stored in the vars folder …  these variables generally have higher priority  then the variable present in the default folder
+====================================================================================================================
+
+
+
+45.Use case:
+----------------------
+Create a ansible roles for apache2 configuration
+1 Go into the /etc/ansible/roles folder
+     Cd /etc/ansible/roles
+2  create a new Role for apache2
+   Sudo  ansible-galaxy init apache2 –-offline
+3. check the tree structure of the role that we created tree apache2
+    Sudo tree apache2
+
+ubuntu@ip-172-31-15-3:/etc/ansible/roles$ sudo tree apache2
+apache2
+├── README.md
+├── defaults
+│   └── main.yml
+├── files
+├── handlers
+│   └── main.yml
+├── meta
+│   └── main.yml
+├── tasks
+│   └── main.yml
+├── templates
+├── tests
+│   ├── inventory
+│   └── test.yml
+└── vars
+    └── main.yml
+
+-------------------------------------------------------------------
+
+Go to task folder in a role and create the  tasks for configuring apache2
+
+Cd apache2/
+Cd tasks/
+ls==o/p==main.yml
+
+Open main.yml file
+
+ Sudo Vim main.yml
+
+---
+# tasks file for apache2
+- include: install.yml
+- include: configure.yml
+- include: check_url_response.yml
+...
+----------------------------------------------------
+
+sudo vim install.yml
+
+---
+- name: install apache2
+  apt:
+    name: apache2
+    state: present
+    update_cache: yes
+...
+--------------------------------------------------------
+
+sudo vim configure.yml
+
+---
+- name: copy index.html
+  copy:
+    src: index.html
+    dest: /var/www/html
+  notify:
+    Restart apache2
+...
+-----------------------------------------------------------
+
+sudo vim check_url_response.yml
+
+
+---
+- name: check url response
+  uri:
+    url: "{{item}}"
+    status_code: [200]
+  with_items:
+    - http://172.31.6.245
+    - http://172.31.2.238
+    - http://172.31.1.99
+...
+-----------------------------------------------------------
+ls
+Go to files and crate some html code
+Cd ..
+ls=files
+Cd files/
+
+sudo vim index.html
+
+<html>
+  <body>
+   <h1>This is Tanti Tech</h1>
+  </body>
+</html>
+
+-----------------------
+ls
+------------------------------------------------------------
+
+Go to handlers folder
+Cd ..
+Cd handers/
+
+
+---
+# handlers file for apache2
+- name: Restart apache2
+  service:
+    name: apache2
+    state: restarted
+...
+----------------------------------------------------
+
+Cd ..
+tree
+
+ubuntu@ip-172-31-15-3:/etc/ansible/roles/apache2$ tree
+.
+├── README.md
+├── defaults
+│   └── main.yml
+├── files
+│   └── index.html
+├── handlers
+│   └── main.yml
+├── meta
+│   └── main.yml
+├── tasks
+│   ├── check_url_response.yml
+│   ├── configure.yml
+│   ├── install.yml
+│   └── main.yml
+├── templates
+├── tests
+│   ├── inventory
+│   └── test.yml
+└── vars
+    └── main.yml
+
+8 directories, 12 files
+----------------------------------------------------------------------------
+
+Come into the roles 
+Cd ..
+
+Now u create the playbook
+
+
+sudo vim apache_role.yml
+
+---
+- name: implementing roles for apache2
+  hosts: all
+  roles:
+    - apache2
+...
+
+---------------------------------------------------------
+
+To execute the role
+
+ansible-playbook apache_role.yml –b
+------------------------------------------------------------------
+=======================================================================
+
+=================================================================
+
+
+Roles for Tomcat9
+=======================
+=========================
+
+Creating roles for tomcat
+---------------------------
+1 cd /etc/ansible/roles
+2 sudo ansible-galaxy init tomcat –-offline
+   Check tree tomcat/
+
+ubuntu@ip-172-31-15-3:/etc/ansible/roles$ tree tomcat/
+tomcat/
+├── README.md
+├── defaults
+│   └── main.yml
+├── files
+├── handlers
+│   └── main.yml
+├── meta
+│   └── main.yml
+├── tasks
+│   └── main.yml
+├── templates
+├── tests
+│   ├── inventory
+│   └── test.yml
+└── vars
+    └── main.yml
+
+8 directories, 8 files
+
+---------------------------------------------------------------------
+
+
+3 Create tasks for tomcat
+    Go to the tasks section
+a)	cd tomcat/
+       cd tasks/
+-------------------------------
+
+b) sudo vim main.yml
+
+---
+# tasks file for tomcat
+- name: call child playbook for tomcat
+  include: "{{item}}"
+ with_items:
+   - installtomcat.yml
+   - configure.yml
+   - restart.yml
+...
+------------------------------------------------------------
+
+
+C ) sudo vim installtomcat.yml
+
+---
+- name: inastall tomcat9 and tomcat9-admin
+  apt:
+    name: "{{item.a}}"
+    state: "{{item.b}}"
+    update_cache: "{{item.c}}"
+  with_items:
+    - {a: "{{pkg1}}",b: "{{state1}}",c: "{{cache1}}"}
+    - {a: "{{pkg2}}",b: "{{state1}}",c: "{{cache2}}"}
+...
+-----------------------------------------------------------------------
+
+Now go to the  variables section and define variables 
+cd ..
+ls
+cd vars/
+cs===o/p==>main.yml
+---------------------------------------------------------------------
+
+Open main.yml file
+
+Sudo vim main.yml
+
+---
+# vars file for tomcat
+pkg1: tomcat9
+pkg2: tomcat9-admin
+state1: present
+cache1: yes
+cache2: no
+...
+-----------------------------------------------------
+
+Come out from variables
+Cd ..
+Go to the tasks folder
+cd tasks/
+ls
+----------------------------------------------------------------
+
+d ) sudo vim configure.yml
+
+---
+- name: copy the tomcat-users.xml file
+  copy:
+    src: "{{file1}}"
+    dest: "{{dest1}}"
+- name: change the ports no from 8080 to 9090
+  replace:
+    regexp: "{{port1}}"
+    replace: "{{port2}}"
+    path: "{{path1}}"
+  notify: chaeck url response
+...
+
+-------------------------------------------------------------------------
+
+Now declare the variables
+
+Go to vars folder and define the variables
+
+cd ..
+
+cd vars/
+ls
+--------------------------------------------------------------
+
+
+Sudo vim main.yml
+
+# vars file for tomcat
+pkg1: tomcat9
+pkg2: tomcat9-admin
+state1: present
+cache1: yes
+cache2: no
+file1: tomcat-users.xml
+dest1: /etc/tomcat9
+port1: 8080
+port2: 9090
+path1: /etc/tomcat9/server.xml
+...
+-------------------------------------------------------
+
+Now go to the task folder
+Cd ..
+Cd tasks/
+ls
+------------------------------------------
+Now create a restart.yml file 
+
+
+sudo vim restart.yml
+
+---
+- name: Restart tomcat9
+  service:
+    name: "{{pkg1}}"
+    state: "{{state2}}"
+...
+
+----------------------------------------------------
+
+Now declare the variables
+
+Go to vars folder and define the variables
+
+cd ..
+cd vars/
+ls 
+---------------------------------------------------------
+
+---
+# vars file for tomcat
+pkg1: tomcat9
+pkg2: tomcat9-admin
+state1: present
+state2: restarted
+cache1: yes
+cache2: no
+file1: tomcat-users.xml
+dest1: /etc/tomcat9
+port1: 8080
+port2: 9090
+path1: /etc/tomcat9/server.xml
+...
+----------------------------------------------------------------
+
+
+
+Now go to the task folder
+Cd ..
+Cd tasks/
+ls
+-------------------------------------
+
+Now go to the files folder
+cd ..
+ls
+cd files/
+
+----------------------------------------------------------
+Open tomcat-users.xml file
+Sudo vim tomcat-users.xml
+
+
+<tomcat-users>
+<role rolename="manager-gui"/>
+<user name="tantitech" password="tanti0" roles="standard,manager-gui,manager-script"/>
+</tomcat-users>
+---------------------------------------------------------------------------------------
+
+Come out from files folder and go to handlers folder
+cd ..
+ls
+cd handelrs/
+ls
+------------------------------------------------------------------
+
+
+vim sudo main.yml
+
+---
+# handlers file for tomcat
+- name: check url response
+  uri:
+    url: "{{item.a}}"
+    status_code: "{{item.b}}"
+  with_items:
+    - {a: "{{server1}}",b: "{{status1}}"}
+    - {a: "{{server2}}",b: "{{status1}}"}
+    - {a: "{{server3}}",b: "{{status1}}"}
+...
+
+-------------------------------------------------------------------------------------
+Now define the variables
+Goto vars folder
+Cd ..
+Cd vars/ 
+-------------------------------------------------------------------------------
+
+
+Define the variables
+	sudo vim main.yml
+---
+# vars file for tomcat
+pkg1: tomcat9
+pkg2: tomcat9-admin
+state1: present
+state2: restarted
+cache1: yes
+cache2: no
+file1: tomcat-users.xml
+dest1: /etc/tomcat9
+port1: 8080
+port2: 9090
+path1: /etc/tomcat9/server.xml
+server1: http://172.31.6.245:8080
+server2: http://172.31.2.238:8080
+server3: http://172.31.1.99:8080
+status1: 200
+...
+-------------------------------------------------------
+
+Now go to the roles folder
+Cd ..
+Cd ..
+-------------------------------------------------------
+
+Create a playbook to call that role
+  sudo vim configure_tomcat.yml
+
+---
+- name: configure tomcat using roles
+  hosts: all
+  roles:
+    - tomcat
+...
+--------------------------------------------------------------------------------
+
+ To run the playbook for the above role
+ ansible-playbook configure_tomcat.yml –b
+----------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
